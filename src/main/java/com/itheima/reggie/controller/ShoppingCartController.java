@@ -109,7 +109,7 @@ public class ShoppingCartController {
      * @param shoppingCart
      * @return
      */
-    @GetMapping("/list")
+    @GetMapping("/api/list")
     public R<List<ShoppingCart>> list(ShoppingCart shoppingCart){
         log.info("购物车数据：{}", shoppingCart);
 

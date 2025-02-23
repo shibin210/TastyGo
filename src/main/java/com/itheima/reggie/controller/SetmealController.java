@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@RequestMapping("/setmeal")
+@RequestMapping("/api/setmeal")
 public class SetmealController {
 
     @Autowired

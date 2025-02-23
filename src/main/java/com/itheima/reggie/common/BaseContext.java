@@ -8,6 +8,7 @@ public class BaseContext {
 
     /**
      * 设置值
+     * set value
      * @param id
      */
     public static void setCurrentId(Long id){
@@ -16,6 +17,7 @@ public class BaseContext {
 
     /**
      * 获取值
+     * get value
      * @return
      */
     public static Long getCurrentId(){

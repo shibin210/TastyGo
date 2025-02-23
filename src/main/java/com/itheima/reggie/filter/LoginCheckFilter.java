@@ -37,13 +37,13 @@ public class LoginCheckFilter implements Filter {
         log.info("拦截到请求：{}", requestURI);
 
         //定义不需要处理的请求路径
-        String[] urls = {"/employee/login",
-                "/employee/logout",
-                "/backend/**",
-                "/front/**",
-                "/common/**",
-                "/user/sendMsg",
-                "/user/login"};
+        String[] urls = {"/api/employee/login",
+                "/api/employee/logout",
+                "/api/backend/**",
+                "/api/front/**",
+                "/api/common/**",
+                "/api/user/sendMsg",
+                "/api/user/login"};
 
         //2.判断本次请求是否需要处理
         boolean check = check(requestURI, urls);
