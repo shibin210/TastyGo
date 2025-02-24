@@ -1,10 +1,21 @@
 package com.itheima.reggie.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.itheima.reggie.entity.Category;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-public interface CategoryService extends IService<Category> {
-    public void remove(Long id);
+/**
+ * Category Service Interface (Hibernate Version)
+ */
+public interface CategoryService {
+    Category saveCategory(Category category);
+    Optional<Category> getCategoryById(Long id);
+    List<Category> getAllCategories();
+    List<Category> getCategoriesByType(Integer type);
+    void deleteCategory(Long id);
+
+    Map<String, Object> getCategoryPage(int page, int size);
 }

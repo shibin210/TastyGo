@@ -1,39 +1,62 @@
 package com.itheima.reggie.entity;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 分类表实例
+ * Category Entity (Hibernate Version)
  */
 @Data
+@Entity
+@Table(name = "category")
 public class Category implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-increment primary key
     private Long id;
 
-    //类型 1.菜品分类 2.套餐分类
-    private Integer type;
-    //分类名称
-    private String name;
-    //排序
-    private Integer sort;
+    @Column(name = "type", nullable = false)
+    private Integer type; // Type: 1 = Dish, 2 = Set Meal
 
-    //创建时间
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-    //更新时间
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-    //创建人
-    @TableField(fill = FieldFill.INSERT)
-    private Long createUser;
-    //修改人
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Long updateUser;
+    @Column(name = "name", nullable = false, length = 50)
+    private String name; // Category Name
 
+    @Column(name = "sort", nullable = false)
+    private Integer sort; // Sort Order
+
+    @CreatedDate
+    @Column(name = "create_time", updatable = false)
+    private LocalDateTime createTime; // Creation Time
+
+    @LastModifiedDate
+    @Column(name = "update_time")
+    private LocalDateTime updateTime; // Last Update Time
+
+    @CreatedDate
+    @Column(name = "create_user", updatable = false)
+    private Long createUser; // Created By
+
+    @LastModifiedDate
+    @Column(name = "update_user")
+    private Long updateUser; // Updated By
+
+    /**
+     * Auto-set timestamps before saving
+     */
+    @PrePersist
+    protected void onCreate() {
+        createTime = LocalDateTime.now();
+        updateTime = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updateTime = LocalDateTime.now();
+    }
 }

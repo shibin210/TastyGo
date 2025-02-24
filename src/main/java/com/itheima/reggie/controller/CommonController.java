@@ -3,23 +3,24 @@ package com.itheima.reggie.controller;
 import com.itheima.reggie.common.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
+/**
+ * 通用文件上传和下载控制器
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/common")
@@ -28,201 +29,110 @@ public class CommonController {
     @Value("${reggie.path}")
     private String basePath;
 
+    private static final List<String> ALLOWED_FILE_TYPES = Arrays.asList(".jpg", ".png", ".jpeg", ".pdf");
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+    /**
+     * 应用启动时检查目录是否存在，不存在则创建
+     */
+    @PostConstruct
+    public void init() {
+        File dir = new File(basePath);
+        if (!dir.exists() && dir.mkdirs()) {
+            log.info("✅ 文件存储目录创建成功: {}", basePath);
+        } else {
+            log.info("📂 文件存储目录已存在: {}", basePath);
+        }
+    }
+
     /**
      * 文件上传
-     *
-     * @param file
-     * @return
+     * @param file  上传的文件
+     * @return      返回文件名
      */
     @PostMapping("/upload")
-    public R<String> upload(MultipartFile file) {
-        // 检查文件是否为空
-        if (file == null || file.isEmpty()) {
-            return R.error("上传的文件为空！");
+    public ResponseEntity<R<String>> upload(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(R.error("上传的文件为空！"));
         }
 
-        // 获取原始文件名并提取文件后缀
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null) {
-            return R.error("无法获取原始文件名！");
-        }
-        String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
-        List<String> allowedSuffixes = Arrays.asList(".jpg", ".png", ".jpeg", ".pdf");
-        if (!allowedSuffixes.contains(suffix.toLowerCase())) {
-            return R.error("不支持的文件类型！");
+        String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        String fileSuffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+
+        // 校验文件类型
+        if (!ALLOWED_FILE_TYPES.contains(fileSuffix.toLowerCase())) {
+            return ResponseEntity.badRequest().body(R.error("不支持的文件类型！"));
         }
 
-        // 检查文件大小
-        long maxFileSize = 10 * 1024 * 1024; // 10MB
-        if (file.getSize() > maxFileSize) {
-            return R.error("文件大小超出限制（最大 10MB）！");
+        // 校验文件大小
+        if (file.getSize() > MAX_FILE_SIZE) {
+            return ResponseEntity.badRequest().body(R.error("文件大小超出限制（最大 10MB）！"));
         }
 
         // 生成唯一文件名
-        String fileName = UUID.randomUUID().toString() + suffix;
-
-        // 检查并创建存储目录
-        File dir = new File(basePath);
-        if (!dir.exists() && !dir.mkdirs()) {
-            return R.error("创建文件上传目录失败！");
-        }
+        String uniqueFileName = UUID.randomUUID().toString() + fileSuffix;
 
         // 保存文件
+        Path filePath = Paths.get(basePath, uniqueFileName);
         try {
-            file.transferTo(new File(basePath + fileName));
-            log.info("文件上传成功：{}，大小：{} 字节，路径：{}", originalFilename, file.getSize(), basePath + fileName);
+            Files.copy(file.getInputStream(), filePath);
+            log.info("✅ 文件上传成功：{} -> {}", originalFilename, filePath);
+            return ResponseEntity.ok(R.success(uniqueFileName));
         } catch (IOException e) {
-            log.error("文件保存失败：{}", e.getMessage(), e);
-            return R.error("文件上传失败，请稍后重试！");
+            log.error("❌ 文件保存失败：{}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(R.error("文件上传失败，请稍后重试！"));
         }
-
-        // 返回文件访问 URL
-        //String fileUrl = "/download?name=" + fileName;
-        return R.success(fileName);
     }
 
-
-/*    @PostMapping("/upload")
-    public R<String> upload(MultipartFile file) {
-        //file 是一个临时文件，需要转存到指定位置，否则本次请求完成后临时文件会被删除
-        // 检查文件是否为空
-        if (file == null || file.isEmpty()) {
-            return R.error("上传的文件为空！");
-        }
-
-        // 打印文件信息
-        log.info("接收到的文件：{}", file.toString());
-
-        // 获取原始文件名并提取文件后缀
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null) {
-            return R.error("无法获取原始文件名！");
-        }
-        String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
-
-        // 生成唯一文件名，防止文件名冲突
-        String fileName = UUID.randomUUID().toString() + suffix;
-
-        // 创建文件保存目录的对象
-        File dir = new File(basePath);
-
-        // 检查目录是否存在，如果不存在则创建
-        if (!dir.exists()) {
-            boolean isDirCreated = dir.mkdirs();
-            if (!isDirCreated) {
-                return R.error("创建文件上传目录失败！");
-            }
-        }
-
-        try {
-            // 将文件保存到指定位置，使用生成的唯一文件名
-            file.transferTo(new File(basePath + fileName));
-        } catch (IOException e) {
-            log.error("保存文件时发生错误", e);
-            throw new RuntimeException("文件上传失败", e);
-        }
-
-        // 返回成功响应，附带新文件名
-        return R.success(fileName);
-    }*/
-
+    /**
+     * 文件下载
+     * @param name     文件名
+     * @param response HTTP 响应对象
+     */
     @GetMapping("/download")
-    public void download(String name, HttpServletResponse response) {
-        // 检查文件名是否为空
-        if (name == null || name.trim().isEmpty()) {
+    public void download(@RequestParam("name") String name, HttpServletResponse response) {
+        if (!StringUtils.hasText(name)) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
-        // 定义文件路径
-        File file = new File(basePath + name);
+        Path filePath = Paths.get(basePath, name);
+        File file = filePath.toFile();
 
-        // 校验文件是否存在
         if (!file.exists() || !file.isFile()) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             try {
                 response.getWriter().write("File not found: " + name);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error("❌ 发送 404 错误时发生异常", e);
             }
             return;
         }
 
-        try (
-                // 使用 try-with-resources 自动管理资源
-                FileInputStream fileInputStream = new FileInputStream(file);
-                ServletOutputStream outputStream = response.getOutputStream()
-        ) {
-            // 设置响应类型（根据文件类型动态设置）
-            String mimeType = Files.probeContentType(file.toPath());
-            if (mimeType == null) {
-                mimeType = "application/octet-stream"; // 默认二进制流类型
-            }
-            response.setContentType(mimeType);
+        try (FileInputStream fileInputStream = new FileInputStream(file);
+             ServletOutputStream outputStream = response.getOutputStream()) {
 
-            // 设置 Content-Disposition，支持下载模式
+            // 设置 MIME 类型
+            String mimeType = Files.probeContentType(filePath);
+            response.setContentType(mimeType != null ? mimeType : "application/octet-stream");
+
+            // 设置响应头
             response.setHeader("Content-Disposition", "attachment; filename=\"" + name + "\"");
-            response.setContentLengthLong(file.length()); // 设置文件大小
+            response.setContentLengthLong(file.length());
 
-            // 使用缓冲区传输数据
+            // 传输文件
             byte[] buffer = new byte[8192];
             int bytesRead;
             while ((bytesRead = fileInputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, bytesRead);
             }
 
-            // 输出流刷新
             outputStream.flush();
+            log.info("✅ 文件下载成功: {}", name);
+
         } catch (IOException e) {
-            // 捕获并处理 IO 异常
-            e.printStackTrace();
+            log.error("❌ 文件下载失败: {}", e.getMessage(), e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
-
-
-    /*@GetMapping("/download")
-    public void download(String name, HttpServletResponse response) {
-        try {
-            //输入流，通过输入流读取文件内容
-            FileInputStream fileInputStream = new FileInputStream(new File(basePath + name));
-
-            //输出流，通过输出流将文件写回浏览器，在浏览器展示图片了。
-            ServletOutputStream outputStream = response.getOutputStream();
-
-            response.setContentType("image/jpeg");
-
-            int len = 0;
-            byte[] bytes = new byte[1024];
-            while ((len = fileInputStream.read(bytes)) != -1) { //循环读取数据直到不等于-1
-                outputStream.write(bytes, 0, len); //使用输出流写入数据
-                outputStream.flush();
-            }
-
-            //关闭资源
-            outputStream.close();
-            fileInputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }*/
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

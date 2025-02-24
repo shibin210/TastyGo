@@ -1,24 +1,41 @@
 package com.itheima.reggie.entity;
-
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-
+import javax.persistence.*;
 import java.math.BigDecimal;
 
+/**
+ * Order Detail Entity (Hibernate Version)
+ */
 @Data
-@TableName("order_detail") // 关联数据库表名
+@Entity
+@Table(name = "order_detail")
 public class OrderDetail {
     
-    @TableId
-    private Long id; // 订单明细ID
-    
-    private Long orderId; // 关联订单ID
-    private Long dishId; // 关联菜品ID（如果是菜品）
-    private Long setmealId; // 关联套餐ID（如果是套餐）
-    private String name; // 菜品或套餐名称
-    private String image; // 商品图片
-    private String dishFlavor; // 口味信息
-    private Integer number; // 购买数量
-    private BigDecimal amount; // 小计金额（单价 * 数量）
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Order Detail ID
+
+    @Column(name = "order_id", nullable = false)
+    private Long orderId; // Associated Order ID
+
+    @Column(name = "dish_id")
+    private Long dishId; // Dish ID (if applicable)
+
+    @Column(name = "setmeal_id")
+    private Long setmealId; // Setmeal ID (if applicable)
+
+    @Column(name = "name", nullable = false)
+    private String name; // Dish/Setmeal Name
+
+    @Column(name = "image")
+    private String image; // Product Image
+
+    @Column(name = "dish_flavor")
+    private String dishFlavor; // Flavor Details
+
+    @Column(name = "number", nullable = false)
+    private Integer number; // Quantity Purchased
+
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount; // Subtotal Amount (Price * Quantity)
 }

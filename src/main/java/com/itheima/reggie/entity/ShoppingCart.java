@@ -2,39 +2,48 @@ package com.itheima.reggie.entity;
 
 import lombok.Data;
 
+import javax.persistence.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Shopping Cart Entity (Hibernate Version)
+ */
 @Data
-public class ShoppingCart {
-
+@Entity
+@Table(name = "shopping_cart")
+public class ShoppingCart implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Shopping Cart ID
 
-    //名称
-    private String name;
+    @Column(name = "name", nullable = false)
+    private String name; // Product Name
 
-    //用户id
-    private Long userId;
+    @Column(name = "user_id", nullable = false)
+    private Long userId; // User ID
 
-    //菜品id
-    private Long dishId;
+    @Column(name = "dish_id")
+    private Long dishId; // Dish ID (Nullable)
 
-    //套餐id
-    private Long setmealId;
+    @Column(name = "setmeal_id")
+    private Long setmealId; // Setmeal ID (Nullable)
 
-    //口味
-    private String dishFlavor;
+    @Column(name = "dish_flavor")
+    private String dishFlavor; // Dish Flavor
 
-    //数量
-    private Integer number;
+    @Column(name = "number", nullable = false)
+    private Integer number; // Quantity
 
-    //金额
-    private BigDecimal amount;
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount; // Total Amount
 
-    //图片
-    private String image;
+    @Column(name = "image")
+    private String image; // Image URL
 
-    private LocalDateTime createTime;
+    @Column(name = "create_time", nullable = false)
+    private LocalDateTime createTime; // Created Timestamp
 }

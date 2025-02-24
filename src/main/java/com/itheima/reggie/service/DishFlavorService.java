@@ -1,8 +1,13 @@
 package com.itheima.reggie.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.itheima.reggie.entity.Dish;
 import com.itheima.reggie.entity.DishFlavor;
+import java.util.List;
 
-public interface DishFlavorService extends IService<DishFlavor> {
+/**
+ * Dish Flavor Service Interface (Hibernate Version)
+ */
+public interface DishFlavorService {
+    DishFlavor saveDishFlavor(DishFlavor dishFlavor);
+    List<DishFlavor> getFlavorsByDishId(Long dishId);
+    void deleteFlavorsByDishId(Long dishId);
 }

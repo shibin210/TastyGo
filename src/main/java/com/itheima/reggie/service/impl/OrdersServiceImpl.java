@@ -1,87 +1,93 @@
 package com.itheima.reggie.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.itheima.reggie.common.BaseContext;
-import com.itheima.reggie.common.CustomException;
-import com.itheima.reggie.entity.AddressBook;
-import com.itheima.reggie.entity.OrderDetail;
+import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.Orders;
-import com.itheima.reggie.entity.ShoppingCart;
-import com.itheima.reggie.mapper.OrderDetailMapper;
-import com.itheima.reggie.mapper.OrdersMapper;
-import com.itheima.reggie.service.AddressBookService;
-import com.itheima.reggie.service.OrderDetailService;
+import com.itheima.reggie.repository.OrdersRepository;
 import com.itheima.reggie.service.OrdersService;
-import com.itheima.reggie.service.ShoppingCartService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
 
+/**
+ * Orders Service Implementation (Hibernate Version)
+ */
 @Service
-public class OrdersServiceImpl extends ServiceImpl<OrdersMapper, Orders> implements OrdersService {
+public class OrdersServiceImpl implements OrdersService {
 
     @Autowired
-    private OrderDetailService orderDetailService;
-
-    @Autowired
-    private ShoppingCartService shoppingCartService;
-
-    @Autowired
-    private AddressBookService addressBookService;
-
+    private OrdersRepository ordersRepository;
 
     @Override
-    @Transactional
-    public void createOrder(Orders order) {
-        // 获取当前用户 ID，get current user ID
-        Long userId = BaseContext.getCurrentId();
-
-        // 查询购物车中的商品
-        List<ShoppingCart> cartItems = shoppingCartService.list(
-                new LambdaQueryWrapper<ShoppingCart>().eq(ShoppingCart::getUserId, userId)
-        );
-
-        // 如果购物车为空，抛出异常
-        if (cartItems == null || cartItems.isEmpty()) {
-            throw new CustomException("购物车为空，无法提交订单");
-        }
-
-        // 查询地址信息
-        AddressBook address = addressBookService.getById(order.getAddressBookId());
-        if (address == null) {
-            throw new CustomException("收货地址不存在");
-        }
-
-        // 生成订单 ID
-        Long orderId = IdWorker.getId();
-
-        // 计算总金额
-        BigDecimal totalAmount = cartItems.stream()
-                .map(item -> item.getAmount().multiply(new BigDecimal(item.getNumber())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // 组装订单数据
-        order.setId(orderId);
-        order.setUserId(userId);
-        order.setOrderTime(LocalDateTime.now());
-        order.setCheckoutTime(null); // 这里显式设置 NULL，避免 SQL 报错
-        order.setStatus(1); // 1-待支付
-        order.setAmount(totalAmount);
-        order.setPhone(address.getPhone());
-        order.setAddress(address.getDetail());
-        order.setConsignee(address.getConsignee());
-
-        // 插入订单表
-        this.save(order);
-
-
+    public Orders createOrder(Orders order) {
+        order.setOrderTime(java.time.LocalDateTime.now());
+        order.setStatus(1); // Default to "Pending Payment"
+        return ordersRepository.save(order);
     }
 
+    @Override
+    public Optional<Orders> getOrderById(Long id) {
+        return ordersRepository.findById(id);
+    }
+
+    @Override
+    public List<Orders> getOrdersByUserId(Long userId) {
+        return ordersRepository.findAll();
+    }
+
+    /**
+     * Spring Data JPA Pagination Implementation (Compatible with MyBatis-Plus Format)
+     * @param page
+     * @param pageSize
+     * @return
+     */
+    @Override
+    public Map<String, Object> getOrderPage(int page, int pageSize) {
+        /**
+         * Step 1: Adjust Page Number for Spring Data JPA
+         * Spring Data JPA uses 0-based page indexing (first page is 0).
+         * Frontend usually uses 1-based indexing (first page is 1).
+         * We subtract 1 from 'page' to align with Spring Data JPA's expectations.
+         */
+        Pageable pageable = PageRequest.of(page - 1, pageSize);
+
+        /**
+         * Step 2: Fetch Paginated Data from Database
+         * 'findAll(Pageable pageable)' is a built-in method in JpaRepository.
+         * It automatically generates the correct SQL query with 'LIMIT' and 'OFFSET' for pagination.
+         * The 'Page<Category>' object contains all the required pagination metadata.
+         */
+        Page<Orders> categoryPage = ordersRepository.findAll(pageable);
+
+        /**
+         * Step 3: Construct Response in MyBatis-Plus Compatible Format
+         * The frontend was originally designed to work with MyBatis-Plus.
+         * MyBatis-Plus uses 'records' instead of 'content', and expects 'current' instead of 'number'.
+         */
+        Map<String, Object> result = new HashMap<>();
+
+        // 🚀 Key: Use "records" instead of "content" to match the frontend's expectations.
+        result.put("records", categoryPage.getContent());
+
+        // 📝 Total number of records in the entire dataset (across all pages).
+        result.put("total", categoryPage.getTotalElements());
+
+        // 📏 Page size (number of records per page).
+        result.put("size", categoryPage.getSize());
+
+        // 🔢 Current page number (converted to 1-based index).
+        result.put("current", categoryPage.getNumber() + 1);
+
+        /**
+         * Step 4: Return the formatted response
+         * This ensures that the frontend can continue to work without changes.
+         */
+        return result;
+    }
 }

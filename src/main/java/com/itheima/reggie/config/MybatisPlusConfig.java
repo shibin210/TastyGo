@@ -1,3 +1,4 @@
+/*
 package com.itheima.reggie.config;
 
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
@@ -5,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerIntercept
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+*/
 /**
  * 配置 MP 的分页插件
  * 项目名称: reggie
@@ -12,7 +14,8 @@ import org.springframework.context.annotation.Configuration;
  * 作者: shibinsun
  * 日期: 10/01/2025
  * 描述:
- */
+ *//*
+
 @Configuration
 public class MybatisPlusConfig {
     @Bean
@@ -22,3 +25,4 @@ public class MybatisPlusConfig {
         return mybatisPlusInterceptor;
     }
 }
+*/

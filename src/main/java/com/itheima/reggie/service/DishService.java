@@ -1,23 +1,36 @@
 package com.itheima.reggie.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
-import com.itheima.reggie.common.R;
-import com.itheima.reggie.dto.DishDto;
 import com.itheima.reggie.entity.Dish;
-
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-public interface DishService extends IService<Dish> {
+/**
+ * Dish Service Interface (Hibernate Version)
+ */
+public interface DishService {
 
-    //新增菜品，同时插入菜品对应的口味数据，需要操作两张表：dish、dish_flavor
-    public void saveWithFlavor(DishDto dishDto);
+    // Save a new dish
+    void saveDish(Dish dish);
 
+    // Get dish by ID
+    Optional<Dish> getDishById(Long id);
 
-    //根据id查询菜品信息和对应的口味信息
-    public DishDto getByIdWithFlavor(Long id);
+    // Update dish
+    void updateDish(Dish dish);
 
-    //更新菜品信息，同时更新对应的口味信息
-    public void updateWithFlavor(DishDto dishDto);
+    // Update dish status in batch
+    boolean updateDishStatusBatch(List<Long> ids, Integer status);
 
-    public boolean updateStatusBatch(List<Long> ids, Integer status);
+    // List dishes with filtering options
+    List<Dish> listDishes(Dish dish);
+
+    // Delete dishes by IDs
+    void deleteDishes(List<Long> ids);
+
+    // Count dishes by category
+    int countDishesByCategoryId(Long categoryId);
+
+    Map<String, Object> getDishPage(int page, int size);
+
 }

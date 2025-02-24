@@ -1,49 +1,71 @@
 package com.itheima.reggie.entity;
-
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
+import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- *
- * 套餐跟菜品的关系实体
+ * Setmeal-Dish Relationship Entity (Hibernate Version)
  */
 @Data
+@Entity
+@Table(name = "setmeal_dish")
 public class SetmealDish implements Serializable {
     private static final long serialVersionUID = 1L;
-    //套餐菜品关联id
-    private Long id;
-    //套餐id
-    private String setmealId;
-    //菜品名称（冗余字段）
-    private String name;
-    //菜品价格
-    private BigDecimal price;
-    //菜品id
-    private String dishId;
-    //份数
-    private Integer copies;
-    //0 停售， 1 起售
-    private Integer sort;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Relationship ID
 
-    //删除状态
-    private Integer isDeleted;
+    @Column(name = "setmeal_id", nullable = false)
+    private Long setmealId; // Associated Setmeal ID
 
-    //创建时间
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-    //更新时间
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-    //创建人
-    @TableField(fill = FieldFill.INSERT)
-    private Long createUser;
-    //修改人
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Long updateUser;
+    @Column(name = "name")
+    private String name; // Dish Name (Redundant Field)
+
+    @Column(name = "price", nullable = false)
+    private BigDecimal price; // Dish Price
+
+    @Column(name = "dish_id", nullable = false)
+    private Long dishId; // Dish ID
+
+    @Column(name = "copies", nullable = false)
+    private Integer copies; // Quantity
+
+    @Column(name = "sort", nullable = false)
+    private Integer sort; // Sorting Order
+
+    @Column(name = "is_deleted", nullable = false)
+    private Integer isDeleted; // 0 = Active, 1 = Deleted
+
+    @CreatedDate
+    @Column(name = "create_time", updatable = false)
+    private LocalDateTime createTime; // Created Timestamp
+
+    @LastModifiedDate
+    @Column(name = "update_time")
+    private LocalDateTime updateTime; // Updated Timestamp
+
+    @CreatedDate
+    @Column(name = "create_user", updatable = false)
+    private Long createUser; // Created By
+
+    @LastModifiedDate
+    @Column(name = "update_user")
+    private Long updateUser; // Updated By
+
+    @PrePersist
+    protected void onCreate() {
+        createTime = LocalDateTime.now();
+        updateTime = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updateTime = LocalDateTime.now();
+    }
 }

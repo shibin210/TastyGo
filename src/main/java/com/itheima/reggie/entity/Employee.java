@@ -1,38 +1,73 @@
 package com.itheima.reggie.entity;
-
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * 员工实体类
- * */
+ * Employee Entity (Hibernate Version)
+ */
 @Data
+@Entity
+@Table(name = "employee") // Maps to the "employee" table in the database
 public class Employee implements Serializable {
-
     private static final long serialVersionUID = 1L;
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-increment primary key
     private Long id;
-    private String name;
-    private String username;
-    private String password;
-    private String phone;
-    private String sex;
-    private String idNumber;
-    private Integer status;
 
-    @TableField(fill = FieldFill.INSERT) //插入时填充字段
-    private LocalDateTime createTime;
+    @Column(name = "name", nullable = false, length = 50)
+    private String name; // Employee name
 
-    @TableField(fill = FieldFill.INSERT_UPDATE) //插入和更新时填充字段
-    private LocalDateTime updateTime;
+    @Column(name = "username", nullable = false, unique = true, length = 50)
+    private String username; // Unique username
 
-    @TableField(fill = FieldFill.INSERT) /*注意这里的注解*/
-    private Long createUser;
+    @Column(name = "password", nullable = false, length = 255)
+    private String password; // Encrypted password
 
-    @TableField(fill = FieldFill.INSERT_UPDATE) //插入和更新时填充字段
-    private Long updateUser;
+    @Column(name = "phone", length = 20)
+    private String phone; // Phone number
+
+    @Column(name = "sex", length = 1)
+    private String sex; // Gender (M/F)
+
+    @Column(name = "id_number", unique = true, length = 18)
+    private String idNumber; // Employee ID number
+
+    @Column(name = "status", nullable = false)
+    private Integer status; // 0 = Inactive, 1 = Active
+
+    @CreatedDate
+    @Column(name = "create_time", updatable = false)
+    private LocalDateTime createTime; // Creation timestamp
+
+    @LastModifiedDate
+    @Column(name = "update_time")
+    private LocalDateTime updateTime; // Last update timestamp
+
+    @CreatedDate
+    @Column(name = "create_user", updatable = false)
+    private Long createUser; // Created by (User ID)
+
+    @LastModifiedDate
+    @Column(name = "update_user")
+    private Long updateUser; // Updated by (User ID)
+
+    /**
+     * Automatically set timestamps before saving
+     */
+    @PrePersist
+    protected void onCreate() {
+        createTime = LocalDateTime.now();
+        updateTime = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updateTime = LocalDateTime.now();
+    }
 }

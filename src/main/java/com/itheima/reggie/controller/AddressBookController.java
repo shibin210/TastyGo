@@ -1,7 +1,5 @@
 package com.itheima.reggie.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.itheima.reggie.common.BaseContext;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.entity.AddressBook;
@@ -11,9 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
- * 地址簿管理
+ * Address Book Management Controller (Hibernate Version)
  */
 @Slf4j
 @RestController
@@ -21,118 +21,103 @@ import java.util.List;
 public class AddressBookController {
 
     @Autowired
-    AddressBookService addressBookService;
+    private AddressBookService addressBookService;
 
     /**
-     * 新增
-     * @param addressBook
-     * @return
+     * Add a new address
+     * @param addressBook AddressBook entity
+     * @return Response with saved address
      */
     @PostMapping
-    public R<AddressBook> save(@RequestBody AddressBook addressBook){
+    public R<AddressBook> save(@RequestBody AddressBook addressBook) {
         addressBook.setUserId(BaseContext.getCurrentId());
-        log.info("addressBook: {}", addressBook);
-        addressBookService.save(addressBook);
-        return R.success(addressBook);
+        log.info("Saving address: {}", addressBook);
+        AddressBook savedAddress = addressBookService.saveAddress(addressBook);
+        return R.success(savedAddress);
     }
 
     /**
-     * 根据id查询地址
-     * @param id
-     * @return
+     * Get an address by ID
+     * @param id Address ID
+     * @return Response with found address
      */
-    @GetMapping
-    public R<AddressBook> get(@PathVariable Long id){
-        AddressBook addressBook = addressBookService.getById(id);
-        if (addressBook != null) {
-            return R.success(addressBook);
-        }
-        return R.error("请添加地址");
+    @GetMapping("/{id}")
+    public R<AddressBook> get(@PathVariable Long id) {
+        Optional<AddressBook> addressBook = addressBookService.getAddressById(id);
+        return addressBook.map(R::success).orElseGet(() -> R.error("Address not found"));
     }
 
     /**
-     * 设置默认地址
-     * @param addressBook
-     * @return
+     * Set an address as default
+     * @param addressBook AddressBook entity
+     * @return Response with updated default address
      */
     @PutMapping("default")
-    public R<AddressBook> setDefault(@RequestBody AddressBook addressBook){
-        log.info("addressBook: {}", addressBook);
-        LambdaUpdateWrapper<AddressBook> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(AddressBook::getUserId, BaseContext.getCurrentId());
-        updateWrapper.set(AddressBook::getIsDefault, 0);
-        //SQL: update address_book set is default = 0 where user_id = ?
-        addressBookService.update(updateWrapper);
-
-        addressBook.setIsDefault(1);
-        //SQL: update address_book set is_default = 1 where id = ?
-        addressBookService.updateById(addressBook);
-        return R.success(addressBook);
+    public R<AddressBook> setDefault(@RequestBody AddressBook addressBook) {
+        log.info("Setting default address: {}", addressBook);
+        AddressBook updatedAddress = addressBookService.setDefaultAddress(addressBook);
+        return R.success(updatedAddress);
     }
 
     /**
-     * 查询默认地址
-     * @return
+     * Get the default address for the current user
+     * @return Response with default address
      */
     @GetMapping("default")
-    public R<AddressBook> getDefault(){
-        LambdaQueryWrapper<AddressBook> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(AddressBook::getUserId, BaseContext.getCurrentId());
-        queryWrapper.eq(AddressBook::getIsDefault, 1);
-
-        //SQL: select * from address_book where user_id = ? and is_default = 1
-        AddressBook addressBook = addressBookService.getOne(queryWrapper);
-        if (addressBook == null) {
-            return R.error("还没有设置默认地址");
-        }
-        return R.success(addressBook);
+    public R<AddressBook> getDefault() {
+        Optional<AddressBook> defaultAddress = addressBookService.getDefaultAddressByUserId(BaseContext.getCurrentId());
+        return defaultAddress.map(R::success).orElseGet(() -> R.error("No default address set"));
     }
 
     /**
-     * 查询指定用户的全部地址
-     * @param addressBook
-     * @return
+     * Get all addresses for a specific user
+     * @return List of AddressBook entities
      */
     @GetMapping("/list")
-    public R<List<AddressBook>> list(AddressBook addressBook){
-        addressBook.setUserId(BaseContext.getCurrentId());
-        log.info("addressBook: {}", addressBook);
-
-        //Long userId = addressBook.getUserId();
-        //条件构造器
-        LambdaQueryWrapper<AddressBook> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(addressBook.getUserId() != null, AddressBook::getUserId, addressBook.getUserId());
-        queryWrapper.orderByDesc(AddressBook::getUpdateTime);
-
-        //SQL: select * from address_book where user_id = ? order by update_time desc
-        List<AddressBook> addressBookList = addressBookService.list(queryWrapper);
+    public R<List<AddressBook>> list() {
+        List<AddressBook> addressBookList = addressBookService.getAllAddressesByUserId(BaseContext.getCurrentId());
         return R.success(addressBookList);
     }
 
     /**
-     * 通过id获取修改地址数据
-     * @param id
-     * @return
+     * Update an address
+     * @param addressBook AddressBook entity
+     * @return Response with updated address
      */
-    @GetMapping("/{id}")
-    public R<AddressBook> getAddressById(@PathVariable Long id){
-        log.info("addressBook: {}", id);
-
-        return R.success(addressBookService.getById(id));
-    }
-
     @PutMapping
-    public R<AddressBook> update(@RequestBody AddressBook addressBook){
+    public R<AddressBook> update(@RequestBody AddressBook addressBook) {
         addressBook.setUserId(BaseContext.getCurrentId());
-        log.info("addressBook: {}", addressBook);
-        addressBookService.updateById(addressBook);
-        return R.success(addressBook);
+        log.info("Updating address: {}", addressBook);
+        AddressBook updatedAddress = addressBookService.saveAddress(addressBook);
+        return R.success(updatedAddress);
     }
 
-    @DeleteMapping()
-    public R<String> delete(@RequestParam("ids") Long id){
-        log.info("id: {}", id);
-        addressBookService.removeById(id);
-        return R.success("");
+    /**
+     * Delete an address by ID
+     * @param id Address ID
+     * @return Response message
+     */
+    @DeleteMapping
+    public R<String> delete(@RequestParam("ids") Long id) {
+        log.info("Deleting address with ID: {}", id);
+        addressBookService.deleteAddress(id);
+        return R.success("Address deleted successfully");
+    }
+
+    /**
+     * Retrieves a paginated list of categories.
+     *
+     * @param page     The page number (starting from 1 on the frontend, but adjusted to start from 0 internally).
+     * @param pageSize The number of records per page.
+     * @return A response containing the paginated list of categories.
+     */
+    @GetMapping("/page")
+    public R<Map<String, Object>> getCategoryPage(
+            @RequestParam("page") int page,
+            @RequestParam("pageSize") int pageSize) {
+
+        // Call the service layer to retrieve paginated data
+        Map<String, Object> pageInfo = addressBookService.getAddressBookPage(page, pageSize);
+        return R.success(pageInfo);
     }
 }

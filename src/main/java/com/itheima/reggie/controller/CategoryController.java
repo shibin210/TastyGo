@@ -1,18 +1,24 @@
 package com.itheima.reggie.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.service.CategoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.NotNull;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
- * 分类管理
+ * Category Management Controller (Hibernate Version)
  */
 @Slf4j
 @RestController
@@ -23,101 +29,75 @@ public class CategoryController {
     private CategoryService categoryService;
 
     /**
-     * 新增分类
-     * @param category
-     * @return
+     * Add a new category
+     * @param category Category entity
+     * @return Response with success message
      */
     @PostMapping
-    public R<String> save(@RequestBody Category category){
-        log.info("category: {}",category);
-        categoryService.save(category);
-        return R.success("新增分类成功");
+    public R<String> save(@RequestBody Category category) {
+        log.info("Saving category: {}", category);
+        categoryService.saveCategory(category);
+        return R.success("Category added successfully");
     }
 
     /**
-     * 分页查询
-     * @param page
-     * @param pageSize
-     * @return
+     * Retrieves a paginated list of categories.
+     *
+     * @param page     The page number (starting from 1 on the frontend, but adjusted to start from 0 internally).
+     * @param pageSize The number of records per page.
+     * @return A response containing the paginated list of categories.
      */
     @GetMapping("/page")
-    public R<Page> page(int page, int pageSize){
-        //分页构造器
-        Page<Category> pageInfo = new Page<>();
-        //条件构造器
-        LambdaQueryWrapper<Category> queryWrapper = new LambdaQueryWrapper<>();
-        //添加排序条件，根据 sort 进行排序
-        queryWrapper.orderByAsc(Category::getSort);
+    public R<Map<String, Object>> getCategoryPage(
+            @RequestParam("page") int page,
+            @RequestParam("pageSize") int pageSize) {
 
-        //进行分页查询
-        categoryService.page(pageInfo,queryWrapper);
+        // Call the service layer to retrieve paginated data
+        Map<String, Object> pageInfo = categoryService.getCategoryPage(page, pageSize);
         return R.success(pageInfo);
     }
 
     /**
-     * 根据id删除分类
-     * @param id
-     * @return
+     * Get all categories
+     * @return List of categories
      */
-    @DeleteMapping
-    public R<String> delete(Long id){
-        log.info("删除分类，id为：{}",id);
-
-       // categoryService.removeById(id);
-        //需要实现自定义的 删除方法。
-        categoryService.remove(id);
-
-        return R.success("分类信息删除成功");
+    @GetMapping
+    public R<List<Category>> getAllCategories() {
+        List<Category> categories = categoryService.getAllCategories();
+        return R.success(categories);
     }
 
     /**
-     * 根据id修改分类信息
-     * @param category
-     * @return
+     * Get a category by ID
+     * @param id Category ID
+     * @return Response with category data
      */
-    @PutMapping
-    public R<String> update(@RequestBody Category category){
-        log.info("修改分类信息：{}", category);
-        categoryService.updateById(category);
-        return R.success("修改分类信息成功");
+    @GetMapping("/{id}")
+    public R<Category> getCategoryById(@PathVariable Long id) {
+        Optional<Category> category = categoryService.getCategoryById(id);
+        return category.map(R::success).orElseGet(() -> R.error("Category not found"));
     }
 
     /**
-     * 根据条件查询分类数据，并回显到下拉框
-     * @param category
-     * @return
+     * Delete a category by ID
+     * @param id Category ID
+     * @return Response message
+     */
+    @DeleteMapping("/{id}")
+    public R<String> delete(@PathVariable Long id) {
+        log.info("Deleting category with ID: {}", id);
+        categoryService.deleteCategory(id);
+        return R.success("Category deleted successfully");
+    }
+
+    /**
+     * Get categories by type
+     * @param type Category type
+     * @return List of categories
      */
     @GetMapping("/list")
-    public R<List<Category>> list(Category category){
-        //条件构造器
-        LambdaQueryWrapper<Category> categoryLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        //添加条件
-        categoryLambdaQueryWrapper.eq(category.getType() != null, Category::getType, category.getType());
-        //添加排序条件
-        categoryLambdaQueryWrapper.orderByAsc(Category::getSort).orderByDesc(Category::getUpdateTime);
-
-        List<Category> list = categoryService.list(categoryLambdaQueryWrapper);
-        return R.success(list);
+    public R<List<Category>> list(@RequestParam("type") Integer type) {
+        List<Category> categories = categoryService.getCategoriesByType(type);
+        return R.success(categories);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

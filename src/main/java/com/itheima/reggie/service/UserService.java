@@ -1,7 +1,12 @@
 package com.itheima.reggie.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.itheima.reggie.entity.User;
+import java.util.Optional;
 
-public interface UserService extends IService<User> {
+/**
+ * User Service Interface (Hibernate Version)
+ */
+public interface UserService {
+    Optional<User> getUserByPhone(String phone);
+    User saveUser(User user);
 }

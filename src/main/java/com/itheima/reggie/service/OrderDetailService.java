@@ -1,7 +1,11 @@
 package com.itheima.reggie.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import com.itheima.reggie.entity.OrderDetail;
+import java.util.List;
 
-public interface OrderDetailService extends IService<OrderDetail> {
+/**
+ * Order Detail Service Interface (Hibernate Version)
+ */
+public interface OrderDetailService {
+    List<OrderDetail> getOrderDetailsByOrderId(Long orderId);
 }

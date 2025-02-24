@@ -1,30 +1,57 @@
 package com.itheima.reggie.entity;
-
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Orders Entity (Hibernate Version)
+ */
 @Data
-@TableName("orders") // 关联数据库表名
+@Entity
+@Table(name = "orders")
 public class Orders {
-    
-    @TableId
-    private Long id; // 订单ID
-    
-    private String number; // 订单编号
-    private Integer status; // 订单状态（1:待支付, 2:已支付, 3:已派送, 4:已完成, 5:已取消）
-    private Long userId; // 用户ID
-    private Long addressBookId; // 地址ID
-    private LocalDateTime orderTime; // 下单时间
-    private LocalDateTime checkoutTime; // 结账时间
-    private Integer payMethod; // 支付方式（1: 微信, 2: 支付宝）
-    private BigDecimal amount; // 订单总金额
-    private String remark; // 订单备注
-    private String phone; // 用户手机号
-    private String address; // 收货地址
-    private String userName; // 用户姓名
-    private String consignee; // 收货人
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id; // Order ID
+
+    @Column(name = "number", unique = true, nullable = false)
+    private String number; // Order Number
+
+    @Column(name = "status", nullable = false)
+    private Integer status; // Order Status (1: Pending, 2: Paid, 3: Dispatched, 4: Completed, 5: Cancelled)
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId; // User ID
+
+    @Column(name = "address_book_id", nullable = false)
+    private Long addressBookId; // Address ID
+
+    @Column(name = "order_time", nullable = false)
+    private LocalDateTime orderTime; // Order Time
+
+    @Column(name = "checkout_time")
+    private LocalDateTime checkoutTime; // Checkout Time
+
+    @Column(name = "pay_method", nullable = false)
+    private Integer payMethod; // Payment Method (1: WeChat, 2: Alipay)
+
+    @Column(name = "amount", nullable = false)
+    private BigDecimal amount; // Total Order Amount
+
+    @Column(name = "remark")
+    private String remark; // Order Notes
+
+    @Column(name = "phone")
+    private String phone; // User Phone
+
+    @Column(name = "address")
+    private String address; // Delivery Address
+
+    @Column(name = "user_name")
+    private String userName; // User Name
+
+    @Column(name = "consignee")
+    private String consignee; // Consignee Name
 }

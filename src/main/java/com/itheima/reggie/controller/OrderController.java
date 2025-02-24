@@ -1,10 +1,6 @@
 package com.itheima.reggie.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.itheima.reggie.common.BaseContext;
 import com.itheima.reggie.common.R;
-import com.itheima.reggie.dto.OrderDetailDTO;
 import com.itheima.reggie.entity.OrderDetail;
 import com.itheima.reggie.entity.Orders;
 import com.itheima.reggie.service.OrderDetailService;
@@ -14,63 +10,55 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
 
+/**
+ * Orders Management Controller (Hibernate Version)
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/order")
 public class OrderController {
+
     @Autowired
     private OrdersService ordersService;
 
     @Autowired
     private OrderDetailService orderDetailService;
 
-    /**
-     * 历史订单分页查询
-     * @param page
-     * @param pageSize
-     * @return
-     */
-    @GetMapping("/userPage")
-    public R<Page<OrderDetailDTO>> getOrderHistory(@RequestParam int page, @RequestParam int pageSize){
-
-        Long userId = BaseContext.getCurrentId();
-        if (userId == null) {
-            return R.error("用户未登录");
-        }
-
-        //1. 查询订单分页
-        Page<Orders> ordersPage = new Page<>(page, pageSize);
-        LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Orders::getUserId, userId).orderByDesc(Orders::getOrderTime);
-        ordersService.page(ordersPage, queryWrapper);
-
-        //2. 组装 DTO 数据
-        List<OrderDetailDTO> dtoList = ordersPage.getRecords().stream().map(
-                order -> {
-                    //查询订单明细
-                    LambdaQueryWrapper<OrderDetail> detailQuery = new LambdaQueryWrapper<>();
-                    detailQuery.eq(OrderDetail::getOrderId, order.getId());
-                    List<OrderDetail> orderDetails = orderDetailService.list(detailQuery);
-
-                    //组装 DTO
-                    return new OrderDetailDTO(orderDetails,order);
-                }
-        ).collect(Collectors.toList());
-
-        //3. 重新封装分页对象
-        Page<OrderDetailDTO> dtoPage = new Page<>();
-        dtoPage.setRecords(dtoList);
-        return R.success(dtoPage);
-    }
-
     @PostMapping("/submit")
-    public R<String> submitOrder(@RequestBody Orders order){
-
-        //1. 处理购物车数据，生成订单
-        ordersService.createOrder(order);
-
-        return null;
+    public R<Orders> submitOrder(@RequestBody Orders order) {
+        Orders createdOrder = ordersService.createOrder(order);
+        return R.success(createdOrder);
     }
+
+    @GetMapping("/{id}")
+    public R<Orders> getOrderById(@PathVariable Long id) {
+        Optional<Orders> order = ordersService.getOrderById(id);
+        return order.map(R::success).orElseGet(() -> R.error("Order not found"));
+    }
+
+    @GetMapping("/{orderId}/details")
+    public R<List<OrderDetail>> getOrderDetails(@PathVariable Long orderId) {
+        return R.success(orderDetailService.getOrderDetailsByOrderId(orderId));
+    }
+
+    /**
+     * Retrieves a paginated list of categories.
+     *
+     * @param page     The page number (starting from 1 on the frontend, but adjusted to start from 0 internally).
+     * @param pageSize The number of records per page.
+     * @return A response containing the paginated list of categories.
+     */
+    @GetMapping("/page")
+    public R<Map<String, Object>> getCategoryPage(
+            @RequestParam("page") int page,
+            @RequestParam("pageSize") int pageSize) {
+
+        // Call the service layer to retrieve paginated data
+        Map<String, Object> pageInfo = ordersService.getOrderPage(page, pageSize);
+        return R.success(pageInfo);
+    }
+
 }
