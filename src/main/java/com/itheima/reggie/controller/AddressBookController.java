@@ -1,6 +1,6 @@
 package com.itheima.reggie.controller;
 
-import com.itheima.reggie.common.BaseContext;
+import com.itheima.reggie.common._BaseContext;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.entity.AddressBook;
 import com.itheima.reggie.service.AddressBookService;
@@ -30,7 +30,7 @@ public class AddressBookController {
      */
     @PostMapping
     public R<AddressBook> save(@RequestBody AddressBook addressBook) {
-        addressBook.setUserId(BaseContext.getCurrentId());
+        addressBook.setUserId(_BaseContext.getCurrentId());
         log.info("Saving address: {}", addressBook);
         AddressBook savedAddress = addressBookService.saveAddress(addressBook);
         return R.success(savedAddress);
@@ -65,7 +65,7 @@ public class AddressBookController {
      */
     @GetMapping("default")
     public R<AddressBook> getDefault() {
-        Optional<AddressBook> defaultAddress = addressBookService.getDefaultAddressByUserId(BaseContext.getCurrentId());
+        Optional<AddressBook> defaultAddress = addressBookService.getDefaultAddressByUserId(_BaseContext.getCurrentId());
         return defaultAddress.map(R::success).orElseGet(() -> R.error("No default address set"));
     }
 
@@ -75,7 +75,7 @@ public class AddressBookController {
      */
     @GetMapping("/list")
     public R<List<AddressBook>> list() {
-        List<AddressBook> addressBookList = addressBookService.getAllAddressesByUserId(BaseContext.getCurrentId());
+        List<AddressBook> addressBookList = addressBookService.getAllAddressesByUserId(_BaseContext.getCurrentId());
         return R.success(addressBookList);
     }
 
@@ -86,7 +86,7 @@ public class AddressBookController {
      */
     @PutMapping
     public R<AddressBook> update(@RequestBody AddressBook addressBook) {
-        addressBook.setUserId(BaseContext.getCurrentId());
+        addressBook.setUserId(_BaseContext.getCurrentId());
         log.info("Updating address: {}", addressBook);
         AddressBook updatedAddress = addressBookService.saveAddress(addressBook);
         return R.success(updatedAddress);

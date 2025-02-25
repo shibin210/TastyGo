@@ -9,4 +9,6 @@ import java.util.Optional;
 public interface UserService {
     Optional<User> getUserByPhone(String phone);
     User saveUser(User user);
+    User registerOrRetrieveUser(String phone);
+
 }

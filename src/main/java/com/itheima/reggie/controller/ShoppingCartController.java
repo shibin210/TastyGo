@@ -1,6 +1,6 @@
 package com.itheima.reggie.controller;
 
-import com.itheima.reggie.common.BaseContext;
+import com.itheima.reggie.common._BaseContext;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.entity.ShoppingCart;
 import com.itheima.reggie.service.ShoppingCartService;
@@ -23,20 +23,20 @@ public class ShoppingCartController {
 
     @PostMapping("/add")
     public R<ShoppingCart> add(@RequestBody ShoppingCart shoppingCart) {
-        shoppingCart.setUserId(BaseContext.getCurrentId());
+        shoppingCart.setUserId(_BaseContext.getCurrentId());
         ShoppingCart savedItem = shoppingCartService.addItem(shoppingCart);
         return R.success(savedItem);
     }
 
     @GetMapping("/list")
     public R<List<ShoppingCart>> list() {
-        List<ShoppingCart> cartItems = shoppingCartService.getCartItemsByUserId(BaseContext.getCurrentId());
+        List<ShoppingCart> cartItems = shoppingCartService.getCartItemsByUserId(_BaseContext.getCurrentId());
         return R.success(cartItems);
     }
 
     @DeleteMapping("/clean")
     public R<String> clean() {
-        shoppingCartService.clearCart(BaseContext.getCurrentId());
+        shoppingCartService.clearCart(_BaseContext.getCurrentId());
         return R.success("Shopping cart cleared");
     }
 

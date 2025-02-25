@@ -1,0 +1,60 @@
+/**
+ * **Project Refactoring: Implementing Spring Security + JWT + Redis for Authentication**
+ *
+ *  **Overview**
+ * This refactoring replaces the traditional session-based authentication with a more scalable
+ * and secure approach using **JWT (JSON Web Token)** for authentication and **Redis** for token management.
+ *
+ *  **Key Changes**
+ * 1 **Spring Security Integration**
+ *    - Replaces custom authentication filters with **Spring Security’s security filters**.
+ *    - Automatically verifies **JWT tokens** and manages authentication.
+ *    - Provides a **centralized security configuration** for access control.
+ *
+ * 2 **JWT for Stateless Authentication**
+ *    - Instead of maintaining session state, **each request carries a JWT token** in the HTTP headers.
+ *    - The token is **self-contained**, meaning no additional database queries are needed for authentication.
+ *    - JWTs are signed and include **user identification information** securely.
+ *
+ * 3 **Redis for Token Blacklisting (Logout Management)**
+ *    - JWTs are normally stateless and cannot be invalidated once issued.
+ *    - **Redis is used as a blacklist** to store **revoked tokens** upon logout.
+ *    - When a user logs out, their **token is stored in Redis until it naturally expires**.
+ *    - This prevents unauthorized use of stolen or leaked tokens.
+ *
+ *  **How It Works**
+ * 1 **User Login Flow**
+ *    - User provides phone number & verification code.
+ *    - The system validates the user, generates a **JWT token**, and returns it.
+ *    - Frontend stores the JWT in **localStorage** or **cookies**.
+ *
+ * 2 **User Authentication for API Requests**
+ *    - All API requests must include the **JWT in the Authorization header** (`Bearer <token>`).
+ *    - Spring Security **intercepts the request** and validates the token.
+ *    - If valid, it extracts the user’s details and grants access.
+ *    - If blacklisted (logged out), access is denied.
+ *
+ * 3 **User Logout Flow**
+ *    - The user logs out by calling the logout API.
+ *    - The **JWT token is added to the Redis blacklist** with its expiration time.
+ *    - Any future requests with this token are **blocked**.
+ *
+ *  **Benefits of This Approach**
+ *  **Scalable** – No need to maintain user sessions in memory.
+ *  **Stateless** – Works well in distributed microservices architectures.
+ *  **Secure** – JWTs are signed and encrypted; Redis prevents unauthorized reuse.
+ *  **Performance** – Eliminates database lookups for every request.
+ *
+ *  **Code Changes Summary**
+ *  **JWT Token Management**
+ *    - `JwtUtil.java` handles token creation, validation, and expiration.
+ *  **Redis for Blacklisting**
+ *    - `RedisUtil.java` stores revoked tokens until expiration.
+ *  **Spring Security Integration**
+ *    - `SecurityConfig.java` defines security rules.
+ *    - `JwtAuthenticationFilter.java` validates JWTs for each request.
+ *  **User Authentication API**
+ *    - `UserController.java` now issues JWTs and manages login/logout with Redis.
+ *
+ *  **This refactoring makes the system more secure, scalable, and production-ready!** 🚀
+ */

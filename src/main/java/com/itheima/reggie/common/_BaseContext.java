@@ -3,7 +3,7 @@ package com.itheima.reggie.common;
 /**
  * 基于 ThreadLocal 封装工具类，用户保存和获取当前登录用户id。
  */
-public class BaseContext {
+public class _BaseContext {
     private static ThreadLocal<Long> threadLocal = new ThreadLocal<>();
 
     /**
