@@ -8,7 +8,7 @@ spring:
       driver-class-name: com.mysql.cj.jdbc.Driver
       url: jdbc:mysql://localhost:3306/reggie?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
       username: root
-      password: Ssb6341895
+      password:
   jpa:
     hibernate:
       ddl-auto: update
@@ -35,7 +35,7 @@ reggie:
   # 把 API_KEY 和 API_SECRET 放入 application.yml
 
 vonage:
-      api-key: 71ef70c6
-      api-secret: oX0Uuvjm6lUFIs76
+      api-key:
+      api-secret:
       sender-name: "TastyGo"
 
